@@ -1,0 +1,355 @@
+<patTemplate:tmpl name="pageoutput" unusedvars="strip">
+
+<script type="text/javascript">
+jomresJquery(document).ready(function() {
+    jomresJquery('#payment-form').bootstrapValidator({
+        message: 'This value is not valid',
+        feedbackIcons: {
+            valid: 'glyphicon glyphicon-ok',
+            invalid: 'glyphicon glyphicon-remove',
+            validating: 'glyphicon glyphicon-refresh'
+        },
+		submitHandler: function(validator, form, submitButton) {
+                    // createToken returns immediately - the supplied callback submits the form if there are no errors
+                    Stripe.card.createToken({
+                        number: jomresJquery('.card-number').val(),
+                        cvc: jomresJquery('.card-cvc').val(),
+                        exp_month: jomresJquery('.card-expiry-month').val(),
+                        exp_year: jomresJquery('.card-expiry-year').val(),
+			name: jomresJquery('.card-holder-name').val(),
+			address_line1: jomresJquery('.address').val(),
+			address_city: jomresJquery('.city').val(),
+			address_zip: jomresJquery('.zip').val(),
+			address_state: jomresJquery('.state').val(),
+			address_country: jomresJquery('.country').val()
+                    }, stripeResponseHandler);
+                    return false; // submit from callback
+					},
+        fields: {
+            street: {
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_STREET_EMPTY}'
+                    },
+					stringLength: {
+                        min: 6,
+                        max: 96,
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CARDNUMBER_LENGTH}'
+                    }
+                }
+            },
+            city: {
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CITY_EMPTY}'
+                    }
+                }
+            },
+			zip: {
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_ZIP_EMPTY}'
+                    },
+					stringLength: {
+                        min: 3,
+                        max: 12,
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_ZIP_LENGTH}'
+                    }
+                }
+            },
+            email: {
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EMAIL_EMPTY}'
+                    },
+                    emailAddress: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EMAIL_INVALID}'
+                    },
+					stringLength: {
+                        min: 6,
+                        max: 65,
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EMAIL_LENGTH}'
+                    }
+                }
+            },
+			cardholdername: {
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CARDHOLDER_EMPTY}'
+                    },
+					stringLength: {
+                        min: 6,
+                        max: 70,
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CARDHOLDER_LENGTH}'
+                    }
+                }
+            },
+			cardnumber: {
+		selector: '#cardnumber',
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CARDNUMBER_EMPTY}'
+                    },
+					creditCard: {
+						message: '{STRIPE_PAYMENT_FORM_VALIDATION_CARDNUMBER_INVALID}'
+					},
+                }
+            },
+			expMonth: {
+                selector: '[data-stripe="exp-month"]',
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EXPIRATION_MONTH_EMPTY}'
+                    },
+                    digits: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EXPIRATION_MONTH_DIGITS}'
+                    },
+                    callback: {
+                        message: 'Expired',
+                        callback: function(value, validator) {
+                            value = parseInt(value, 10);
+                            var year         = validator.getFieldElements('expYear').val(),
+                                currentMonth = new Date().getMonth() + 1,
+                                currentYear  = new Date().getFullYear();
+                            if (value < 0 || value > 12) {
+                                return false;
+                            }
+                            if (year == '') {
+                                return true;
+                            }
+                            year = parseInt(year, 10);
+                            if (year > currentYear || (year == currentYear && value > currentMonth)) {
+                                validator.updateStatus('expYear', 'VALID');
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            },
+            expYear: {
+                selector: '[data-stripe="exp-year"]',
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EXPIRATION_YEAR_EMPTY}'
+                    },
+                    digits: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_EXPIRATION_YEAR_DIGITS}'
+                    },
+                    callback: {
+                        message: 'Expired',
+                        callback: function(value, validator) {
+                            value = parseInt(value, 10);
+                            var month        = validator.getFieldElements('expMonth').val(),
+                                currentMonth = new Date().getMonth() + 1,
+                                currentYear  = new Date().getFullYear();
+                            if (value < currentYear || value > currentYear + 100) {
+                                return false;
+                            }
+                            if (month == '') {
+                                return false;
+                            }
+                            month = parseInt(month, 10);
+                            if (value > currentYear || (value == currentYear && month > currentMonth)) {
+                                validator.updateStatus('expMonth', 'VALID');
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            },
+			cvv: {
+		selector: '#cvv',
+                validators: {
+                    notEmpty: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CCV_EMPTY}'
+                    },
+					cvv: {
+                        message: '{STRIPE_PAYMENT_FORM_VALIDATION_CCV_INVALID}',
+                        creditCardField: 'cardnumber'
+                    }
+                }
+            },
+        }
+    });
+});
+</script>
+<script type="text/javascript">
+            // this identifies your website in the createToken call below
+            Stripe.setPublishableKey('{PUBLIC_KEY}');
+ 
+            function stripeResponseHandler(status, response) {
+                if (response.error) {
+                    // re-enable the submit button
+                    jomresJquery('.submit-button').removeAttr("disabled");
+					// show hidden div
+					document.getElementById('a_x200').style.display = 'block';
+                    // show the errors on the form
+                    jomresJquery(".payment-errors").html(response.error.message);
+                } else {
+                    var form$ = jomresJquery("#payment-form");
+                    // token contains id, last4, and card type
+                    var token = response['id'];
+                    // insert the token into the form so it gets submitted to the server
+                    form$.append("<input type='hidden' name='stripeToken' value='" + token + "' />");
+                    // and submit
+                    form$.get(0).submit();
+                }
+            }
+ 
+
+</script>
+
+<form action="" method="POST" id="payment-form" class="form-horizontal">
+	<div class="row row-centered">
+		<div class="col-md-12">
+			<div class="page-header">
+				<h2 class="gdfg">{STRIPE_PAYMENT_FORM_ESCURE}</h2>
+			</div>
+			<div class="alert alert-danger" id="a_x200" style="display: none;"> <strong>Error!</strong> <span class="payment-errors"></span> </div>
+			<div class="row row-centered">
+
+				<div class="col-md-4 col-md-offset-4 alert alert-info">
+					{_JOMRES_COM_MR_EB_PAYM_CONTRACT_TOTAL}
+				</div>
+				<div class="col-md-4 col-md-offset-4 alert alert-info">
+					{CONTRACT_TOTAL}
+				</div>
+			</div>
+			<div class="row row-centered">
+				<div class="col-md-6">
+					<fieldset>
+						<legend>{STRIPE_PAYMENT_FORM_CARDDETAILS}</legend>
+						
+						<!-- Card Holder Name -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label"  for="textinput">{STRIPE_PAYMENT_FORM_HOLDER}</label>
+						  <div class="col-sm-6">
+							<input type="text" name="cardholdername" maxlength="70" placeholder="Card Holder Name" class="card-holder-name form-control" value="{STRIPE_PAYMENTFORM_NAME}">
+						  </div>
+						</div>
+						
+						<!-- Card Number -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{STRIPE_PAYMENT_FORM_CREDITCARD}</label>
+								<div class="col-sm-6">
+								<input type="text" id="cardnumber" maxlength="19" placeholder="{STRIPE_PAYMENT_FORM_CREDITCARD}" class="card-number form-control">
+							</div>
+						</div>
+						
+						<!-- Expiry-->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{STRIPE_PAYMENT_FORM_EXPIRATION}</label>
+							<div class="col-sm-6">
+								<div class="form-inline">
+								<select name="select2" data-stripe="exp-month" class="card-expiry-month stripe-sensitive required form-control">
+									<option value="01" selected="selected">01</option>
+									<option value="02">02</option>
+									<option value="03">03</option>
+									<option value="04">04</option>
+									<option value="05">05</option>
+									<option value="06">06</option>
+									<option value="07">07</option>
+									<option value="08">08</option>
+									<option value="09">09</option>
+									<option value="10">10</option>
+									<option value="11">11</option>
+									<option value="12">12</option>
+								</select>
+								<span> / </span>
+								<select name="select2" data-stripe="exp-year" class="card-expiry-year stripe-sensitive required form-control">
+								</select>
+								<script type="text/javascript">
+									var select = jomresJquery(".card-expiry-year"),
+									year = new Date().getFullYear();
+									for (var i = 0; i < 12; i++) {
+										select.append(jomresJquery("<option value='"+(i + year)+"' "+(i === 0 ? "selected" : "")+">"+(i + year)+"</option>"))
+									}
+								</script> 
+								</div>
+						  </div>
+						</div>
+						
+						<!-- CVV -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">CVV/CVV2</label>
+							<div class="col-sm-3">
+								<input type="text" id="cvv" placeholder="CVV" maxlength="4" class="card-cvc form-control">
+							</div>
+						</div>
+									
+					<!-- Submit -->
+					<div class="control-group">
+					  <div class="controls">
+						<center>
+						  <button class="btn btn-success" type="submit">{STRIPE_PAYMENT_FORM_PAYNOW}</button>
+						</center>
+					  </div>
+					</div>
+				  </fieldset>
+				</div>
+				<div class="col-md-6">
+					<fieldset>
+						<!-- Form Name -->
+						<legend>{STRIPE_PAYMENT_FORM_BILLINGDETAILS}</legend>
+						<!-- Street -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_STREET}</label>
+							<div class="col-sm-6">
+								<input type="text" name="street" placeholder="Street" class="address form-control" value="{STRIPE_PAYMENTFORM_STREET}">
+							</div>
+						</div>
+	  
+						<!-- City -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_TOWN}</label>
+							<div class="col-sm-6">
+								<input type="text" name="city" placeholder="City" class="city form-control" value="{STRIPE_PAYMENTFORM_TOWN}">
+							</div>
+						</div>
+					  
+						<!-- State -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_REGION}</label>
+							<div class="col-sm-6">
+								<input type="text" name="state" maxlength="65" placeholder="State" class="state form-control" value="{STRIPE_PAYMENTFORM_REGION}">
+							</div>
+						</div>
+					  
+						<!-- Postcal Code -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_POSTCODE}</label>
+							<div class="col-sm-6">
+								<input type="text" name="zip" maxlength="9" placeholder="Postal Code" class="zip form-control" value="{STRIPE_PAYMENTFORM_POSTCODE}">
+							</div>
+						</div>
+					  
+						<!-- Country -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_COUNTRY}</label>
+							<div class="col-sm-6"> 
+								<!--input type="text" name="country" placeholder="Country" class="country form-control"-->
+								<div class="country bfh-selectbox bfh-countries" name="country" placeholder="Select Country" data-flags="true" data-filter="true" data-country="{STRIPE_PAYMENTFORM_COUNTRY}"> </div>
+							</div>
+						</div>
+					  
+						<!-- Email -->
+						<div class="form-group">
+							<label class="col-sm-4 control-label" for="textinput">{_JOMRES_COM_MR_VRCT_PROPERTY_HEADER_EMAIL}</label>
+							<div class="col-sm-6">
+								<input type="text" name="email" maxlength="65" placeholder="Email" class="email form-control" value="{STRIPE_PAYMENTFORM_EMAIL}">
+							</div>
+						</div>
+					</fieldset>
+				</div>
+			</div>
+		</div>
+	</div>
+<input type="hidden" name="payment_reference" value="{PAYMENT_REFERENCE}"/>
+<input type="hidden" name="plugin" value="stripe"/>
+</form>
+ 
+</patTemplate:tmpl>

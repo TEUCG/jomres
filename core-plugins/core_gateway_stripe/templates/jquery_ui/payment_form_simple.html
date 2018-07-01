@@ -1,0 +1,28 @@
+<patTemplate:tmpl name="pageoutput" unusedvars="strip">
+	
+	<div class="row row-centered">
+		<div class="col-md-4 col-md-offset-4">
+			<h2>{STRIPE_PAYMENT_FORM_SECURE}</h2>
+		</div>
+	</div>
+	<div class="row row-centered">
+		<div class="col-md-4 col-md-offset-4">
+			<form action="" method="POST" id="payment-form" class="form-horizontal">
+			<script
+				src="https://checkout.stripe.com/checkout.js" class="stripe-button"
+				data-key="{PUBLIC_KEY}"
+				data-amount="{CONTRACT_TOTAL}"
+				data-name="{PROPERTY_NAME}"
+				data-description="{_JOMRES_AJAXFORM_BILLING_ROOM_TOTAL}"
+				data-currency="{CURRENCY}"
+				data-image="{IMG_PATH}"
+				data-locale="auto"
+				data-zip-code="true">
+			  </script>
+			<input type="hidden" name="payment_reference" value="{PAYMENT_REFERENCE}"/>
+			<input type="hidden" name="plugin" value="stripe"/>
+			<input type="hidden" name="task" value="processpayment"/>
+			</form>
+		</div>
+	</div>
+</patTemplate:tmpl>

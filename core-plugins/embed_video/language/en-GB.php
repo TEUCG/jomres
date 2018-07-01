@@ -1,0 +1,18 @@
+<?php
+/**
+* @license GNU/GPL http://www.gnu.org/copyleft/gpl.html
+* @author Aladar Barthi <sales@jomres-extras.com>
+* @copyright 2009-2010 Aladar Barthi
+**/
+// ################################################################
+defined( '_JOMRES_INITCHECK' ) or die( '' );
+// ################################################################
+
+jr_define('_JRPORTAL_EMBED_VIDEO_TITLE',"Embed Video");
+jr_define('_JRPORTAL_EMBED_VIDEO_TITLE_TAB',"Video");
+jr_define('_JRPORTAL_EMBED_VIDEO_ENABLED_YESNO',"Enabled? ");
+jr_define('_JRPORTAL_EMBED_VIDEO_ENABLED_YES',"Yes");
+jr_define('_JRPORTAL_EMBED_VIDEO_ENABLED_NO',"No");
+jr_define('_JRPORTAL_EMBED_VIDEO_WIDTH',"Width ");
+jr_define('_JRPORTAL_EMBED_VIDEO_HEIGHT',"Height ");
+jr_define('_JRPORTAL_EMBED_VIDEO_INSTRUCTIONS_FRONTEND',"Youtube video URL ");
